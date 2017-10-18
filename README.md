@@ -9,7 +9,10 @@ Use this Dockerfile / -image to start a sshd-server upon a lightweight Alpine co
 
 ### Basic Usage
 ```
-$ docker run --rm --publish=1337:22 --env ROOT_PASSWORD=MyRootPW!23 hermsi/alpine-sshd
+$ docker run --rm \
+--publish=1337:22 \
+--env ROOT_PASSWORD=MyRootPW123 \
+hermsi/alpine-sshd
 ```
 
 After the container is up you are able to ssh in it as root with the in --env provided password for "root"-user.
