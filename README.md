@@ -14,6 +14,11 @@ $ docker run --rm \
 hermsi/alpine-sshd
 ```
 
+After the container is up you are able to ssh in it as root with the in --env provided password for "root"-user.
+```
+$ ssh root@mydomain.tld -p 1337
+```
+
 ### Use with docker-compose
 I built this image in order to use it along with a nginx and fpm-php container for transferring files via sftp. <br>
 If you are interested in a Dockerfile which fulfills this need: [this way](https://github.com/Hermsi1337/docker-compose/blob/master/full_php_dev_stack/docker-compose.yml)
