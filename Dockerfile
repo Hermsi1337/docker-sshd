@@ -4,7 +4,7 @@ LABEL maintainer="https://github.com/hermsi1337"
 
 ENV ROOT_PASSWORD root
 
-RUN apk upgrade && apk add --no-cache openssh \
+RUN apk update	&& apk upgrade && apk add openssh \
 		&& sed -i s/#PermitRootLogin.*/PermitRootLogin\ yes/ /etc/ssh/sshd_config \
 		&& echo "root:${ROOT_PASSWORD}" | chpasswd \
 		&& rm -rf /var/cache/apk/* /tmp/*
