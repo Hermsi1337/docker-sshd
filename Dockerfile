@@ -1,16 +1,19 @@
-FROM alpine:latest
+ARG         ALPINE_VERSION=${ALPINE_VERSION:-3.8}
+FROM        alpine:${ALPINE_VERSION}
 
-LABEL maintainer="https://github.com/hermsi1337"
+LABEL       maintainer="https://github.com/hermsi1337"
 
-ENV ROOT_PASSWORD root
+ARG         OPENSSH_VERSION=${OPENSSH_VERSION:-7.7_p1-r3}
+ENV         OPENSSH_VERSION=${OPENSSH_VERSION} \
+            ROOT_PASSWORD=root \
+            KEYPAIR_LOGIN=false
 
-RUN apk update	&& apk upgrade && apk add openssh \
-		&& sed -i s/#PermitRootLogin.*/PermitRootLogin\ yes/ /etc/ssh/sshd_config \
-		&& echo "root:${ROOT_PASSWORD}" | chpasswd \
-		&& rm -rf /var/cache/apk/* /tmp/*
+ADD         entrypoint.sh /
+RUN         apk update && apk upgrade && apk add openssh=${OPENSSH_VERSION} \
+		        && chmod +x /entrypoint.sh \
+		        && mkdir -p /root/.ssh \
+		        && rm -rf /var/cache/apk/* /tmp/*
 
-COPY entrypoint.sh /usr/local/bin/
-
-EXPOSE 22
-
-ENTRYPOINT ["entrypoint.sh"]
+EXPOSE      22
+VOLUME      ["/etc/ssh"]
+ENTRYPOINT  ["/entrypoint.sh"]
