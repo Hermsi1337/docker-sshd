@@ -6,6 +6,7 @@ Use this Dockerfile / -image to start a sshd-server upon a lightweight Alpine co
 ### Features
 * Always installs the latest OpenSSH-Version available for Alpine
 * Password of "root"-user can be changed when starting the container using --env
+* You can choose between ssh-keypair- and password auth
 
 ### Basic Usage
 #### Authentication by password
