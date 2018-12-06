@@ -29,7 +29,7 @@ $ docker run --rm \
 --volume /path/to/authorized_keys:/root/.ssh/authorized_keys \
 hermsi/alpine-sshd
 ```
-After the container is up you are able to ssh in it as root by a keypair which matches the provided public-key in authorized_keys for "root"-user.
+After the container is up you are able to ssh in it as root with a private-key which matches the provided public-key in authorized_keys for "root"-user.
 ```
 $ ssh root@mydomain.tld -p 1337 -i /path/to/private_key
 ```
