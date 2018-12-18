@@ -12,11 +12,11 @@ Use this Dockerfile / -image to start a sshd-server upon a lightweight Alpine co
 This image is designed to be as slim and vanilla as possible.   
 If you need additional Tools like `git` or `bash`-shell, I definetly recommend to build your own image on top of `alpine-sshd`:
 ```Dockerfile
-FROM hermsi/alpine-sshd:latest
+FROM  hermsi/alpine-sshd:latest
 
-RUN apk add --no-cache --upgrade \
-      git \
-      bash
+RUN   apk add --no-cache --upgrade \
+            git \
+            bash
 ```
 ### Basic Usage
 #### Authentication by password
