@@ -9,7 +9,7 @@ ENV         OPENSSH_VERSION=${OPENSSH_VERSION} \
             KEYPAIR_LOGIN=false
 
 ADD         entrypoint.sh /
-RUN         apk update && apk upgrade && apk add openssh=${OPENSSH_VERSION} \
+RUN         apk add --upgrade --no-cache openssh=${OPENSSH_VERSION} \
 		        && chmod +x /entrypoint.sh \
 		        && mkdir -p /root/.ssh \
 		        && rm -rf /var/cache/apk/* /tmp/*
