@@ -8,7 +8,7 @@ ENV         OPENSSH_VERSION=${OPENSSH_VERSION} \
             ROOT_PASSWORD=root \
             KEYPAIR_LOGIN=false
 
-ADD         entrypoint.sh /
+COPY        entrypoint.sh /
 RUN         apk add --upgrade --no-cache openssh=${OPENSSH_VERSION} \
             && chmod +x /entrypoint.sh \
 	    && mkdir -p /root/.ssh \
