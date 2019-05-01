@@ -1,9 +1,9 @@
-ARG         ALPINE_VERSION=${ALPINE_VERSION:-3.8}
+ARG         ALPINE_VERSION=${ALPINE_VERSION:-3.9}
 FROM        alpine:${ALPINE_VERSION}
 
 LABEL       maintainer="https://github.com/hermsi1337"
 
-ARG         OPENSSH_VERSION=${OPENSSH_VERSION:-7.7_p1-r3}
+ARG         OPENSSH_VERSION=${OPENSSH_VERSION:-7.9_p1-r5}
 ENV         OPENSSH_VERSION=${OPENSSH_VERSION} \
             ROOT_PASSWORD=root \
             KEYPAIR_LOGIN=false
