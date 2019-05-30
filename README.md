@@ -4,8 +4,8 @@
 Use this Dockerfile / -image to start a sshd-server upon a lightweight Alpine container.
 
 ### Regular builds, automagically
-[![Build Status](https://travis-ci.org/Hermsi1337/docker-sshd.svg?branch=master)](https://travis-ci.org/Hermsi1337/docker-sshd)   
-Thanks to [Travis-CI](https://travis-ci.org/) this image is pushed weekly and creates new [tags](https://hub.docker.com/r/hermsi/alpine-sshd/tags/) if there are new versions available.
+[![Build Status](https://travis-ci.com/Hermsi1337/docker-sshd.svg?branch=master)](https://travis-ci.com/Hermsi1337/docker-sshd)   
+Thanks to [Travis-CI](https://travis-ci.com/) this image is pushed weekly and creates new [tags](https://hub.docker.com/r/hermsi/alpine-sshd/tags/) if there are new versions available.
 
 ### Tags
 For recent tags check [Dockerhub](https://hub.docker.com/r/hermsi/alpine-sshd/tags/).
