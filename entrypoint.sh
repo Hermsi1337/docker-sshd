@@ -1,7 +1,7 @@
 #!/bin/sh
 
 if [ "${ROOT_PASSWORD}" == "root" ] || [ -z "${ROOT_PASSWORD}" ]; then
-    export ROOT_PASSWORD="$(hexdump -e '\"%02x\"' -n 16 /dev/urandom)"
+    export ROOT_PASSWORD="$(hexdump -e '%02x' -n 16 /dev/urandom)"
 fi
 
 echo "root:${ROOT_PASSWORD}" | chpasswd
