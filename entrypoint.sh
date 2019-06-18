@@ -1,5 +1,11 @@
 #!/bin/sh
 
+if [ "${ROOT_PASSWORD}" == "root" ] || [ -z "${ROOT_PASSWORD}" ]; then
+    export ROOT_PASSWORD="$(hexdump -e '\"%02x\"' -n 16 /dev/urandom)"
+fi
+
+echo "root:${ROOT_PASSWORD}" | chpasswd
+
 # generate host keys if not present
 ssh-keygen -A
 
@@ -7,12 +13,10 @@ ssh-keygen -A
 if [ "${KEYPAIR_LOGIN}" = "true" ] && [ -f "${HOME}/.ssh/authorized_keys" ] ; then
     sed -i "s/#PermitRootLogin.*/PermitRootLogin without-password/" /etc/ssh/sshd_config
     sed -i "s/#PasswordAuthentication.*/PasswordAuthentication no/" /etc/ssh/sshd_config
+    chmod 600 "${HOME}/.ssh/authorized_keys"
     echo "Enabled root-login by keypair and disabled password-login"
 else
     sed -i s/#PermitRootLogin.*/PermitRootLogin\ yes/ /etc/ssh/sshd_config
-    if [ -n "${ROOT_PASSWORD}" ] && [ "${ROOT_PASSWORD}" != "root" ]; then
-        echo "root:${ROOT_PASSWORD}" | chpasswd
-    fi
     echo "Enabled root-login by password"
 fi
 
