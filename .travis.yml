@@ -7,6 +7,7 @@ addons:
     packages:
       - docker-ce
       - w3m
+      - shellcheck
 
 env:
   global:
