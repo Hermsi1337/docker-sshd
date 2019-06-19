@@ -23,7 +23,7 @@ RUN         apk add --upgrade --no-cache \
             && \
             cp -a /etc/ssh "${CACHED_SSH_DIRECTORY}" \
             && \
-	        rm -rf /var/cache/apk/*
+            rm -rf /var/cache/apk/*
 
 COPY        entrypoint.sh /
 COPY        conf.d/etc/ /etc/
