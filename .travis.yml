@@ -20,6 +20,7 @@ before_script:
   - export OPENSSH_VERSION="$(w3m -dump "https://pkgs.alpinelinux.org/packages?name=openssh&branch=v${ALPINE_VERSION}" | grep -m 1 "x86" | awk '{print $2}')"
 
 script: |
+  for i in *.sh ; do shellcheck $i ; done && \
   docker build \
           --no-cache \
           --pull \
