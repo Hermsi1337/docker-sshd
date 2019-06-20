@@ -58,7 +58,7 @@ if [[ "${ROOT_KEYPAIR_LOGIN_ENABLED}" == "true" ]]; then
 fi
 
 # initiate default sshd-config if there is none available
-if ! find "/etc/ssh" -mindepth 1 -print -quit 2>/dev/null | grep -q .; then
+if [[ ! "$(ls -A /etc/ssh)" ]]; then
     cp -a "${CACHED_SSH_DIRECTORY}"/* /etc/ssh/.
 fi
 rm -rf "${CACHED_SSH_DIRECTORY}"
