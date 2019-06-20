@@ -50,6 +50,7 @@ $ ssh root@mydomain.tld -p 1337 -i /path/to/private_key
 ```
 
 #### Authenticate as additional user by ssh-keypair
+```bash
 $ docker run --rm \
 --publish=1337:22 \
 --env SSH_USERS="hermsi:1000:1000" \
@@ -63,6 +64,7 @@ $ ssh mydomain.tld -l hermsi -p 1337 -i /path/to/hermsi_private_key
 ```
 
 #### Create multiple, additional users with keypair
+```bash
 $ docker run --rm \
 --publish=1337:22 \
 --env SSH_USERS="hermsi:1000:1000,dennis:1001:1001" \
@@ -84,7 +86,8 @@ While beeing very slim and vanilla this image is still highly customizable.
 |:-----------------:|:-----------------:|:----------------------------------------------:|:------------------------------------------------------------------------------------------------------------------------------------:|
 | ROOT_LOGIN_UNLOCKED | 'true' or 'false' | 'false' | Whether to enable or disable login as 'root' user |
 | ROOT_KEYPAIR_LOGIN_ENABLED | 'true' or 'false' | 'false' | Enable login as 'root' by keypair (implies `ROOT_LOGIN_UNLOCKED`). Must mount public-key into container: `/root/.ssh/authorized_keys` |
-| USER_LOGIN_SHELL | any existing shell | `/bin/bash` | Choose the desired default shell for all additional users. If the configured shell is not existent, a fallback to `/bin/ash` is applied. |
+| ROOT_PASSWORD | any desired string | `undefined` | Set password for login as `root` (implies `ROOT_LOGIN_UNLOCKED`) |
+| USER_LOGIN_SHELL | any existing shell | `/bin/bash` | Choose the desired default shell for all additional users. If the configured shell is not existent, a fallback to `/bin/ash` is applied |
 
 ### Extending this image
 This image is designed to be as slim and vanilla as possible.   
