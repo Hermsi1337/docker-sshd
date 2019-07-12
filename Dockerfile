@@ -1,4 +1,4 @@
-ARG         ALPINE_VERSION="${ALPINE_VERSION:-3.9}"
+ARG         ALPINE_VERSION="${ALPINE_VERSION:-3.10}"
 FROM        alpine:"${ALPINE_VERSION}"
 
 LABEL       maintainer="https://github.com/hermsi1337"

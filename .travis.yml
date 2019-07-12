@@ -16,7 +16,7 @@ env:
 
 before_script:
   - sudo sysctl -w net.ipv4.ip_forward=1
-  - export ALPINE_VERSION="3.9"
+  - export ALPINE_VERSION="3.10"
   - export OPENSSH_VERSION="$(w3m -dump "https://pkgs.alpinelinux.org/packages?name=openssh&branch=v${ALPINE_VERSION}" | grep -m 1 "x86" | awk '{print $2}')"
 
 script: |
