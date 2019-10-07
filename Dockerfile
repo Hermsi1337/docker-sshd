@@ -3,7 +3,7 @@ FROM        alpine:"${ALPINE_VERSION}"
 
 LABEL       maintainer="https://github.com/hermsi1337"
 
-ARG         OPENSSH_VERSION="${OPENSSH_VERSION:-7.9_p1-r5}"
+ARG         OPENSSH_VERSION="${OPENSSH_VERSION:-8.0_p1-r0}"
 ENV         CONF_VOLUME="/conf.d"
 ENV         OPENSSH_VERSION="${OPENSSH_VERSION}" \
             CACHED_SSH_DIRECTORY="${CONF_VOLUME}/ssh" \
