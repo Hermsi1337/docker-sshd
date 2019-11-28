@@ -134,11 +134,16 @@ if [[ -n "${SSH_USERS}" ]]; then
         else
             addgroup -g "${USER_GID}" "${USER_GROUP}"
         fi
-        getent passwd "${USER_NAME}" &>/dev/null || adduser -s "${USER_LOGIN_SHELL}" -D -u "${USER_UID}" -G "${USER_GROUP}" "${USER_NAME}"
+
+        if getent passwd "${USER_NAME}" &>/dev/null ; then
+            log "warning" "        desired USER_NAME is already present in system. Skipping creation - USER_NAME: '${USER_NAME}'"
+        else
+            adduser -s "${USER_LOGIN_SHELL}" -D -u "${USER_UID}" -G "${USER_GROUP}" "${USER_NAME}"
+            log "        user '${USER_NAME}' created - UID: '${USER_UID}' GID: '${USER_GID}' GNAME: '${USER_GROUP}'"
+        fi
+
         passwd -u "${USER_NAME}" &>/dev/null || true
         mkdir -p "/home/${USER_NAME}/.ssh"
-
-        log "        user '${USER_NAME}' created - UID: '${USER_UID}' GID: '${USER_GID}' GNAME: '${USER_GROUP}'"
 
         MOUNTED_AUTHORIZED_KEYS="${AUTHORIZED_KEYS_VOLUME}/${USER_NAME}"
         LOCAL_AUTHORIZED_KEYS="/home/${USER_NAME}/.ssh/authorized_keys"
