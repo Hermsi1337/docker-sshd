@@ -135,7 +135,7 @@ if [[ -n "${SSH_USERS}" ]]; then
             addgroup -g "${USER_GID}" "${USER_GROUP}"
         fi
         getent passwd "${USER_NAME}" &>/dev/null || adduser -s "${USER_LOGIN_SHELL}" -D -u "${USER_UID}" -G "${USER_GROUP}" "${USER_NAME}"
-        passwd -u "${USER_NAME}" &>/dev/null
+        passwd -u "${USER_NAME}" &>/dev/null || return
         mkdir -p "/home/${USER_NAME}/.ssh"
 
         log "        user '${USER_NAME}' created - UID: '${USER_UID}' GID: '${USER_GID}' GNAME: '${USER_GROUP}'"
