@@ -133,13 +133,13 @@ if [[ -n "${SSH_USERS}" ]]; then
             log "warning" "        desired GID is already present in system. Using the present group-name - GID: '${USER_GID}' GNAME: '${USER_GROUP}'"
         else
             addgroup -g "${USER_GID}" "${USER_GROUP}"
+            getent passwd "${USER_NAME}" &>/dev/null || adduser -s "${USER_LOGIN_SHELL}" -D -u "${USER_UID}" -G "${USER_GROUP}" "${USER_NAME}"
+            passwd -u "${USER_NAME}" &>/dev/null
+            mkdir -p "/home/${USER_NAME}/.ssh"
+
+            log "        user '${USER_NAME}' created - UID: '${USER_UID}' GID: '${USER_GID}' GNAME: '${USER_GROUP}'"
         fi
-        getent passwd "${USER_NAME}" &>/dev/null || adduser -s "${USER_LOGIN_SHELL}" -D -u "${USER_UID}" -G "${USER_GROUP}" "${USER_NAME}"
-        passwd -u "${USER_NAME}" &>/dev/null
-        mkdir -p "/home/${USER_NAME}/.ssh"
-
-        log "        user '${USER_NAME}' created - UID: '${USER_UID}' GID: '${USER_GID}' GNAME: '${USER_GROUP}'"
-
+        
         MOUNTED_AUTHORIZED_KEYS="${AUTHORIZED_KEYS_VOLUME}/${USER_NAME}"
         LOCAL_AUTHORIZED_KEYS="/home/${USER_NAME}/.ssh/authorized_keys"
 
