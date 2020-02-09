@@ -1,5 +1,6 @@
 [![Travis](https://shields.beevelop.com/travis/Hermsi1337/docker-sshd.svg?style=flat-square)](https://travis-ci.com/Hermsi1337/docker-sshd)
 [![Pulls](https://shields.beevelop.com/docker/pulls/hermsi/alpine-sshd.svg?style=flat-square)](https://hub.docker.com/r/hermsi/alpine-sshd/)
+[![Stars](https://shields.beevelop.com/docker/stars/hermsi/sshd.svg?style=flat-square)](https://hub.docker.com/r/hermsi/alpine-sshd/)
 [![Layers](https://shields.beevelop.com/docker/image/layers/hermsi/alpine-sshd/latest.svg?style=flat-square)](https://hub.docker.com/r/hermsi/alpine-sshd/)
 [![Size](https://shields.beevelop.com/docker/image/image-size/hermsi/alpine-sshd/latest.svg?style=flat-square)](https://hub.docker.com/r/hermsi/alpine-sshd/)
 
