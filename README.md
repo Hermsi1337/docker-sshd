@@ -3,7 +3,7 @@
 [![Stars](https://shields.beevelop.com/docker/stars/hermsi/alpine-sshd.svg?style=flat-square)](https://hub.docker.com/r/hermsi/alpine-sshd/)
 [![Layers](https://shields.beevelop.com/docker/image/layers/hermsi/alpine-sshd/latest.svg?style=flat-square)](https://hub.docker.com/r/hermsi/alpine-sshd/)
 [![Size](https://shields.beevelop.com/docker/image/image-size/hermsi/alpine-sshd/latest.svg?style=flat-square)](https://hub.docker.com/r/hermsi/alpine-sshd/)
-[![Donate](https://img.shields.io/badge/Donate-PayPal-blue.svg)](https://www.paypal.me/Hermsi)
+[![Donate](https://img.shields.io/badge/Donate-PayPal-yellow.svg)](https://donate.dennis-hermsmeier.de)
 
 ## Make your OpenSSH fly on Alpine
 
