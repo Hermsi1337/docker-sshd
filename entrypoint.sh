@@ -37,7 +37,7 @@ ensure_mod() {
     G_ID="${4}"
 
     chmod "${MOD}" "${FILE}"
-    chown "${U_ID}"."${G_ID}" "${FILE}"
+    chown "${U_ID}":"${G_ID}" "${FILE}"
 }
 
 generate_passwd() {
