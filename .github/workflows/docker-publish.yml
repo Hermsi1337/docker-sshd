@@ -1,10 +1,10 @@
 name: CI/CD - Application with Docker
 
 on:
-  push:
-    branches: [build-and-publish]
+#  push:
+#    branches: [main]
   pull_request:
-    branches: build-and-publish]
+#    branches: [main]
     types: [opened, synchronize, reopened]
 
 jobs:
