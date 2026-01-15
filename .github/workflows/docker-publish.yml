@@ -2,9 +2,9 @@ name: CI/CD - Application with Docker
 
 on:
   push:
-    branches: [build-and-publish]
+    branches: [main]
   pull_request:
-    branches: [build-and-publish]
+    branches: main]
     types: [opened, synchronize, reopened]
 
 jobs:
@@ -37,11 +37,6 @@ jobs:
         run: |
           echo "REPO_NAME=${GITHUB_REPOSITORY##*/}" >> "$GITHUB_OUTPUT"
           echo "SHORT_SHA=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
-
-      # Set Version
-      - name: Set Version
-        run: |
-          sed -i "s/#VERSION#/${{ steps.meta.outputs.SHORT_SHA }}/g" app/show-help.cgi
 
       # Login to Docker Hub
       - name: Log in to Docker Hub
