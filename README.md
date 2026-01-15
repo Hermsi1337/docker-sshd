@@ -1,27 +1,16 @@
-[![Travis](https://shields.beevelop.com/travis/Hermsi1337/docker-sshd.svg?style=flat-square)](https://travis-ci.com/Hermsi1337/docker-sshd)
-[![Pulls](https://shields.beevelop.com/docker/pulls/hermsi/alpine-sshd.svg?style=flat-square)](https://hub.docker.com/r/hermsi/alpine-sshd/)
-[![Stars](https://shields.beevelop.com/docker/stars/hermsi/alpine-sshd.svg?style=flat-square)](https://hub.docker.com/r/hermsi/alpine-sshd/)
-[![Layers](https://shields.beevelop.com/docker/image/layers/hermsi/alpine-sshd/latest.svg?style=flat-square)](https://hub.docker.com/r/hermsi/alpine-sshd/)
-[![Size](https://shields.beevelop.com/docker/image/image-size/hermsi/alpine-sshd/latest.svg?style=flat-square)](https://hub.docker.com/r/hermsi/alpine-sshd/)
-[![Donate](https://img.shields.io/badge/Donate-PayPal-yellow.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=T85UYT37P3YNJ&source=url)
-
 ## Make your OpenSSH fly on Alpine
 
 ### Overview
 
 Use this Dockerfile / -image to start a slim and highly customizable sshd-server with `bash` and `rsync` installed.
 
-### Regular builds, automagically
-
-Thanks to [Travis-CI](https://travis-ci.com/) this image is pushed weekly and creates new [tags](https://hub.docker.com/r/hermsi/alpine-sshd/tags/) if there are new versions available.
-
 ### Tags
 
-For recent tags check [Dockerhub](https://hub.docker.com/r/hermsi/alpine-sshd/tags/).
+For recent tags check [Dockerhub](https://hub.docker.com/r/caco3x/alpine-sshd/tags/).
 
 ### Features
 
-* `bash`-shell and `rsync` installed
+* `bash`-shell, `rsync` and `fclones` installed
 * Default `.bashrc` from `ubuntu`
 * Desired shell is configurable by --env
 * En- or disable `root`-user by --env
@@ -39,7 +28,7 @@ For recent tags check [Dockerhub](https://hub.docker.com/r/hermsi/alpine-sshd/ta
 $ docker run --rm \
 --publish=1337:22 \
 --env ROOT_PASSWORD=MyRootPW123 \
-hermsi/alpine-sshd
+caco3x/alpine-sshd
 ```
 
 After the container is up you are able to ssh in it as root with the in --env provided password for "root"-user.
@@ -55,7 +44,7 @@ $ docker run --rm \
 --publish=1337:22 \
 --env ROOT_KEYPAIR_LOGIN_ENABLED=true \
 --volume /path/to/authorized_keys:/root/.ssh/authorized_keys \
-hermsi/alpine-sshd
+caco3x/alpine-sshd
 ```
 
 After the container is up you are able to ssh in it as root with a private-key which matches the provided public-key in authorized_keys for "root"-user.
@@ -69,15 +58,15 @@ $ ssh root@mydomain.tld -p 1337 -i /path/to/private_key
 ```bash
 $ docker run --rm \
 --publish=1337:22 \
---env SSH_USERS="hermsi:1000:1000" \
---volume /path/to/hermsi_public_key:/conf.d/authorized_keys/hermsi \
-hermsi/alpine-sshd
+--env SSH_USERS="caco3:1000:1000" \
+--volume /path/to/caco3_public_key:/conf.d/authorized_keys/caco3 \
+caco3x/alpine-sshd
 ```
 
 After the container is up you are able to ssh in it as the given user with a private-key that matches the provided public-key in authorized_keys for your created user.
 
 ```bash
-$ ssh mydomain.tld -l hermsi -p 1337 -i /path/to/hermsi_private_key
+$ ssh mydomain.tld -l caco3 -p 1337 -i /path/to/caco3_private_key
 ```
 
 #### Create multiple, additional users with keypair
@@ -85,16 +74,29 @@ $ ssh mydomain.tld -l hermsi -p 1337 -i /path/to/hermsi_private_key
 ```bash
 $ docker run --rm \
 --publish=1337:22 \
---env SSH_USERS="hermsi:1000:1000,dennis:1001:1001" \
---volume /path/to/hermsi_public_key:/conf.d/authorized_keys/hermsi \
+--env SSH_USERS="caco3:1000:1000,dennis:1001:1001" \
+--volume /path/to/caco3_public_key:/conf.d/authorized_keys/caco3 \
 --volume /path/to/dennis_public_key:/conf.d/authorized_keys/dennis \
-hermsi/alpine-sshd
+caco3x/alpine-sshd
 ```
 
 After the container is up you are able to ssh in it as one of the given users with a private-key that matches the provided public-key in authorized_keys for your desired user.
 
 ```bash
 $ ssh root@mydomain.tld -p 1337 -i /path/to/private_key
+```
+
+#### Docker Compose
+```yaml
+services:
+  sshd:
+    image: caco3x/docker-sshd
+    environment:
+      - SSH_USERS=caco3:1000:10
+    ports:
+      - 10022:22
+    volumes:
+      - ./authorized_keys:/conf.d/authorized_keys/caco3
 ```
 
 ### Configuration
@@ -116,13 +118,8 @@ This image is designed to be as slim and vanilla as possible.
 If you need additional Tools like `git` , I definetly recommend to build your own image on top of `alpine-sshd`:
 
 ```Dockerfile
-FROM  hermsi/alpine-sshd:latest
+FROM  caco3x/alpine-sshd:latest
 
 RUN   apk add --no-cache \
             git
 ```
-
-### Use with docker-compose
-
-I built this image in order to use it along with a nginx and fpm-php container for transferring files via sftp.
-If you are interested in a Dockerfile which fulfills this need: [this way](https://github.com/Hermsi1337/docker-compose/blob/master/full_php_dev_stack/docker-compose.yml)
