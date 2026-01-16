@@ -1,0 +1,114 @@
+name: Build and Deploy Docker
+
+on:
+  push:
+    branches:
+      - '**'
+  workflow_dispatch:
+  schedule:
+    - cron: '0 2 * * 1'  # every monday at 02:00 UTC
+
+env:
+  IMAGE_NAME: hermsi/alpine-sshd
+
+jobs:
+  build:
+    if: github.ref != 'refs/heads/master' && github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        IMAGE_NAME: [ "hermsi/alpine-sshd" ]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v3
+
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y curl jq grep w3m
+
+      - name: Get current versions
+        id: server_versions
+        run: |
+          export CURRENT_ALPINE_VERSION="$(w3m -dump https://alpinelinux.org/releases/ | grep "edge" -A2 | tail -1 | awk '{print $1}' | cut -d "v" -f 2)"
+          export OPENSSH_VERSION="$(w3m -dump "https://pkgs.alpinelinux.org/packages?name=openssh&branch=v${CURRENT_ALPINE_VERSION}" | grep -m 1 "x86" | awk '{print $2}')"
+          echo "Building Open-SSH in version '${OPENSSH_VERSION}' on Alpine '${CURRENT_ALPINE_VERSION}'"
+          echo "ALPINE_VERSION=$CURRENT_ALPINE_VERSION" >> $GITHUB_ENV
+          echo "OPENSSH_VERSION=$OPENSSH_VERSION" >> $GITHUB_ENV
+
+      - name: Bash Syntax Check
+        run: |
+          find . -name "*.sh" -print0 | xargs -0 -r -n1 bash -n
+
+      - name: Build Docker Image
+        run: |
+          docker build \
+            --no-cache \
+            --pull \
+            --build-arg OPENSSH_VERSION="${{ env.OPENSSH_VERSION }}" \
+            --build-arg ALPINE_VERSION="${{ env.ALPINE_VERSION }}" \
+            --tag "${{ matrix.IMAGE_NAME }}:${{ env.OPENSSH_VERSION }}-alpine${{ env.ALPINE_VERSION }}" \
+            --tag "${{ matrix.IMAGE_NAME }}:${{ env.OPENSSH_VERSION }}-alpine" \
+            --tag "${{ matrix.IMAGE_NAME }}:${{ env.OPENSSH_VERSION }}" \
+            --tag "${{ matrix.IMAGE_NAME }}:latest" \
+            --file "${{ github.workspace }}/Dockerfile" \
+            "${{ github.workspace }}"
+
+  deploy:
+    if: github.ref == 'refs/heads/master' || github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        IMAGE_NAME: [ "hermsi/alpine-sshd", "quay.io/hermsi1337/alpine-sshd" ]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v3
+
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y curl jq grep w3m
+
+      - name: Get current versions
+        id: server_versions
+        run: |
+          export CURRENT_ALPINE_VERSION="$(w3m -dump https://alpinelinux.org/releases/ | grep "edge" -A2 | tail -1 | awk '{print $1}' | cut -d "v" -f 2)"
+          export OPENSSH_VERSION="$(w3m -dump "https://pkgs.alpinelinux.org/packages?name=openssh&branch=v${CURRENT_ALPINE_VERSION}" | grep -m 1 "x86" | awk '{print $2}')"
+          echo "Building Open-SSH in version '${OPENSSH_VERSION}' on Alpine '${CURRENT_ALPINE_VERSION}'"
+          echo "ALPINE_VERSION=$CURRENT_ALPINE_VERSION" >> $GITHUB_ENV
+          echo "OPENSSH_VERSION=$OPENSSH_VERSION" >> $GITHUB_ENV
+
+      - name: Bash Syntax Check
+        run: |
+          find . -name "*.sh" -print0 | xargs -0 -r -n1 bash -n
+
+      - name: Write Docker config.json
+        run: |
+          mkdir -p $HOME/.docker
+          echo '${{ secrets.DOCKER_CONFIG_JSON }}' > $HOME/.docker/config.json
+          chmod 0600 $HOME/.docker/config.json
+
+      - name: Build Docker Image
+        run: |
+          docker build \
+            --no-cache \
+            --pull \
+            --build-arg OPENSSH_VERSION="${{ env.OPENSSH_VERSION }}" \
+            --build-arg ALPINE_VERSION="${{ env.ALPINE_VERSION }}" \
+            --tag "${{ matrix.IMAGE_NAME }}:${{ env.OPENSSH_VERSION }}-alpine${{ env.ALPINE_VERSION }}" \
+            --tag "${{ matrix.IMAGE_NAME }}:${{ env.OPENSSH_VERSION }}-alpine" \
+            --tag "${{ matrix.IMAGE_NAME }}:${{ env.OPENSSH_VERSION }}" \
+            --tag "${{ matrix.IMAGE_NAME }}:latest" \
+            --file "${{ github.workspace }}/Dockerfile" \
+            "${{ github.workspace }}"
+
+      - name: Push Docker Images
+        run: |
+          docker push "${{ matrix.IMAGE_NAME }}:${{ env.OPENSSH_VERSION }}-alpine${{ env.ALPINE_VERSION }}"
+          docker push "${{ matrix.IMAGE_NAME }}:${{ env.OPENSSH_VERSION }}-alpine"
+          docker push "${{ matrix.IMAGE_NAME }}:${{ env.OPENSSH_VERSION }}"
+          docker push "${{ matrix.IMAGE_NAME }}:latest"
