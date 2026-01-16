@@ -1,9 +1,7 @@
-[![Travis](https://shields.beevelop.com/travis/Hermsi1337/docker-sshd.svg?style=flat-square)](https://travis-ci.com/Hermsi1337/docker-sshd)
-[![Pulls](https://shields.beevelop.com/docker/pulls/hermsi/alpine-sshd.svg?style=flat-square)](https://hub.docker.com/r/hermsi/alpine-sshd/)
-[![Stars](https://shields.beevelop.com/docker/stars/hermsi/alpine-sshd.svg?style=flat-square)](https://hub.docker.com/r/hermsi/alpine-sshd/)
-[![Layers](https://shields.beevelop.com/docker/image/layers/hermsi/alpine-sshd/latest.svg?style=flat-square)](https://hub.docker.com/r/hermsi/alpine-sshd/)
-[![Size](https://shields.beevelop.com/docker/image/image-size/hermsi/alpine-sshd/latest.svg?style=flat-square)](https://hub.docker.com/r/hermsi/alpine-sshd/)
-[![Donate](https://img.shields.io/badge/Donate-PayPal-yellow.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=T85UYT37P3YNJ&source=url)
+[![Docker Pulls](https://img.shields.io/docker/pulls/hermsi/alpine-sshd?style=flat-square&logo=docker)](https://hub.docker.com/r/hermsi/alpine-sshd/)
+[![Docker Stars](https://img.shields.io/docker/stars/hermsi/alpine-sshd?style=flat-square&logo=docker)](https://hub.docker.com/r/hermsi/alpine-sshd/)
+[![Image Size](https://img.shields.io/docker/image-size/hermsi/alpine-sshd/latest?style=flat-square&logo=docker)](https://hub.docker.com/r/hermsi/alpine-sshd/)
+[![Donate](https://img.shields.io/badge/Donate-PayPal-yellow?style=flat-square&logo=paypal)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=T85UYT37P3YNJ&source=url)
 
 ## Make your OpenSSH fly on Alpine
 
