@@ -69,7 +69,7 @@ jobs:
         IMAGE_NAME:
           - "hermsi/alpine-sshd"
           - "quay.io/hermsi1337/alpine-sshd"
-          - "ghcr.io/${{ env.GHCR_OWNER }}/docker-sshd"
+          - "ghcr.io/${{ github.repository_owner }}/docker-sshd"
 
     steps:
       - uses: actions/checkout@v4
