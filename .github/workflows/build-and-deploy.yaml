@@ -69,7 +69,7 @@ jobs:
         IMAGE_NAME:
           - "hermsi/alpine-sshd"
           - "quay.io/hermsi1337/alpine-sshd"
-          - "ghcr.io/${{ github.repository_owner }}/docker-sshd"
+          - "ghcr.io/${{ env.GHCR_OWNER }}/docker-sshd"
 
     steps:
       - uses: actions/checkout@v4
@@ -108,6 +108,10 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Normalize image name
+        run: |
+          echo "IMAGE_NAME_LC=$(echo '${{ matrix.IMAGE_NAME }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
       - name: Build Docker Image
         run: |
           docker build \
@@ -115,16 +119,16 @@ jobs:
             --pull \
             --build-arg OPENSSH_VERSION="${{ env.OPENSSH_VERSION }}" \
             --build-arg ALPINE_VERSION="${{ env.ALPINE_VERSION }}" \
-            --tag "${{ matrix.IMAGE_NAME }}:${{ env.OPENSSH_VERSION }}-alpine${{ env.ALPINE_VERSION }}" \
-            --tag "${{ matrix.IMAGE_NAME }}:${{ env.OPENSSH_VERSION }}-alpine" \
-            --tag "${{ matrix.IMAGE_NAME }}:${{ env.OPENSSH_VERSION }}" \
-            --tag "${{ matrix.IMAGE_NAME }}:latest" \
+            --tag "${{ env.IMAGE_NAME_LC }}:${{ env.OPENSSH_VERSION }}-alpine${{ env.ALPINE_VERSION }}" \
+            --tag "${{ env.IMAGE_NAME_LC }}:${{ env.OPENSSH_VERSION }}-alpine" \
+            --tag "${{ env.IMAGE_NAME_LC }}:${{ env.OPENSSH_VERSION }}" \
+            --tag "${{ env.IMAGE_NAME_LC }}:latest" \
             --file "${{ github.workspace }}/Dockerfile" \
             "${{ github.workspace }}"
 
       - name: Push Docker Images
         run: |
-          docker push "${{ matrix.IMAGE_NAME }}:${{ env.OPENSSH_VERSION }}-alpine${{ env.ALPINE_VERSION }}"
-          docker push "${{ matrix.IMAGE_NAME }}:${{ env.OPENSSH_VERSION }}-alpine"
-          docker push "${{ matrix.IMAGE_NAME }}:${{ env.OPENSSH_VERSION }}"
-          docker push "${{ matrix.IMAGE_NAME }}:latest"
+          docker push "${{ env.IMAGE_NAME_LC }}:${{ env.OPENSSH_VERSION }}-alpine${{ env.ALPINE_VERSION }}"
+          docker push "${{ env.IMAGE_NAME_LC }}:${{ env.OPENSSH_VERSION }}-alpine"
+          docker push "${{ env.IMAGE_NAME_LC }}:${{ env.OPENSSH_VERSION }}"
+          docker push "${{ env.IMAGE_NAME_LC }}:latest"
