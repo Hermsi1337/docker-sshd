@@ -90,7 +90,7 @@ $ ssh root@mydomain.tld -p 1337 -i /path/to/private_key
 ```yaml
 services:
   sshd:
-    image: caco3x/docker-sshd
+    image: caco3x/backintime-sshd
     environment:
       - SSH_USERS=caco3:1000:10
     ports:
