@@ -2,8 +2,12 @@ services:
   sshd:
     image: caco3x/docker-sshd
     environment:
+      # User ID and group of the user backintime on the target system.
+      # To get them, SSH into your target system and run
+      # "id -u backintime" and "id -g backintime"
       - USER_UID=1002
       - USER_GID=100
+      # Public SSH key of the user backintime
       - PUBLIC_KEY=ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC7osnqdNQeyf8Qqh1xkfX0QJbYhft8x9XQD7k8crQrFfK4QGu3DRSdFpsku2ekAqrczpcOcgDyx1Uu8Ug8EWfIotGAqXDtWcM2r59HJBMKSYxkjxza1JUwGIIZu6T5qvcIZylXI5yfC1Xn8nsrEneJVp65lCf1bfzT4VARVIUR1lV1n5QvhI7U1duw3SBVsgFt2HPOBJo/bH019VwQqP226cCvTNuGiJi2zc8eyFrJGPuYNv/THSnaJLIRoYlJUI6GsQ2fMgzjSlbV7Q0sJ7qphVjlHj228MkKgP76ntDlSNZ0qFAaXxVYOQ2THz2F4anJxnwnL4kXkQ5n5bb0O9QywPYL249USLfJsl1T6ujytbzNWUpq2RNU15qoETvddc3+9o9ApIg/jgQ+eipK6Hi49DXspne/E74v3ybpiVU4XWFBrXlAUf0ipOfJE/Azr0+S0i9cS7NRjvlqOOA9hasqCUQaKAryRgJED/vJp0Lkcvv+pMYANVurwmZGzQZNAtc= root@PC3
     ports:
       - 10022:22
