@@ -9,4 +9,5 @@ services:
       - 10022:22
     restart: unless-stopped
     volumes:
-      - ./authorized_keys:/conf.d/authorized_keys
+      - ./ssh:/etc/ssh
+  

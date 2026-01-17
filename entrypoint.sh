@@ -127,15 +127,12 @@ mkdir -p "/home/${USER_NAME}/.ssh"
 
 LOCAL_AUTHORIZED_KEYS="/home/${USER_NAME}/.ssh/authorized_keys"
 
-# Check for public key in environment variable first, then fall back to file
+# Check for public key in environment variable
 if [[ -n "${PUBLIC_KEY}" ]]; then
     echo "${PUBLIC_KEY}" > "${LOCAL_AUTHORIZED_KEYS}"
     log "    set public key from environment variable"
-elif [[ -e "${AUTHORIZED_KEYS_VOLUME}/${USER_NAME}" ]]; then
-    cp "${AUTHORIZED_KEYS_VOLUME}/${USER_NAME}" "${LOCAL_AUTHORIZED_KEYS}"
-    log "    copied ${AUTHORIZED_KEYS_VOLUME}/${USER_NAME} to ${LOCAL_AUTHORIZED_KEYS}"
 else
-    log "warning" "    no SSH authorized_keys found for user '${USER_NAME}' and no PUBLIC_KEY provided"
+    log "error" "    no PUBLIC_KEY environment variable provided"
 fi
 
 if [[ -e "${LOCAL_AUTHORIZED_KEYS}" ]]; then
