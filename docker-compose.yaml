@@ -1,0 +1,11 @@
+services:
+  sshd:
+    image: caco3x/docker-sshd
+    environment:
+      - USER_UID=1002
+      - USER_GID=100
+    ports:
+      - 10022:22
+    restart: unless-stopped
+    volumes:
+      - ./authorized_keys:/conf.d/authorized_keys

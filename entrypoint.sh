@@ -101,72 +101,47 @@ fi
 
 printf "\n"
 
-log "Applying configuration for additional users ..."
+log "Applying configuration for backintime user ..."
 
-if [[ ! -x "${USER_LOGIN_SHELL}" ]]; then
-    log "error" "    can not allocate desired shell '${USER_LOGIN_SHELL}', falling back to '${USER_LOGIN_SHELL_FALLBACK}' ..."
-    USER_LOGIN_SHELL="${USER_LOGIN_SHELL_FALLBACK}"
-fi
+USER_NAME="backintime"
+USER_UID="${USER_UID:-1009}"
+USER_GID="${USER_GID:-100}"
 
-log "    desired shell is ${USER_LOGIN_SHELL}"
-
-
-if [[ -n "${SSH_USERS}" ]]; then
-
-    IFS=","
-    for USER in ${SSH_USERS}; do
-
-        log "    '${USER}'"
-
-        USER_NAME="$(echo "${USER}" | cut -d ':' -f 1)"
-        USER_UID="$(echo "${USER}" | cut -d ':' -f 2)"
-        USER_GID="$(echo "${USER}" | cut -d ':' -f 3)"
-
-        if [[ -z "${USER_NAME}" ]] || [[ -z "${USER_UID}" ]] || [[ -z "${USER_GID}" ]]; then
-            log "error" "        skipping invalid data '${USER_NAME}' - UID: '${USER_UID}' GID: '${USER_GID}'"
-            continue
-        fi
-
-        USER_GROUP="${USER_NAME}"
-        if getent group "${USER_GID}" &>/dev/null ; then 
-            USER_GROUP="$(getent group "${USER_GID}" | cut -d ':' -f 1)"
-            log "warning" "        desired GID is already present in system. Using the present group-name - GID: '${USER_GID}' GNAME: '${USER_GROUP}'"
-        else
-            addgroup -g "${USER_GID}" "${USER_GROUP}"
-        fi
-
-        if getent passwd "${USER_NAME}" &>/dev/null ; then
-            log "warning" "        desired USER_NAME is already present in system. Skipping creation - USER_NAME: '${USER_NAME}'"
-        else
-            adduser -s "${USER_LOGIN_SHELL}" -D -u "${USER_UID}" -G "${USER_GROUP}" "${USER_NAME}"
-            log "        user '${USER_NAME}' created - UID: '${USER_UID}' GID: '${USER_GID}' GNAME: '${USER_GROUP}'"
-        fi
-
-        passwd -u "${USER_NAME}" &>/dev/null || true
-        mkdir -p "/home/${USER_NAME}/.ssh"
-
-        MOUNTED_AUTHORIZED_KEYS="${AUTHORIZED_KEYS_VOLUME}/${USER_NAME}"
-        LOCAL_AUTHORIZED_KEYS="/home/${USER_NAME}/.ssh/authorized_keys"
-
-        if [[ ! -e "${MOUNTED_AUTHORIZED_KEYS}" ]]; then
-            log "warning" "        no SSH authorized_keys found for user '${USER_NAME}'"
-        else
-            cp "${MOUNTED_AUTHORIZED_KEYS}" "${LOCAL_AUTHORIZED_KEYS}"
-            log "        copied ${MOUNTED_AUTHORIZED_KEYS} to ${LOCAL_AUTHORIZED_KEYS}"
-            ensure_mod "${LOCAL_AUTHORIZED_KEYS}" "0600" "${USER_NAME}" "${USER_GID}"
-            log "        set mod 0600 on ${LOCAL_AUTHORIZED_KEYS}"
-        fi
-
-        printf "\n"
-
-    done
-    unset IFS
-
+USER_GROUP="${USER_NAME}"
+if getent group "${USER_GID}" &>/dev/null ; then 
+    USER_GROUP="$(getent group "${USER_GID}" | cut -d ':' -f 1)"
+    log "warning" "    desired GID is already present in system. Using the present group-name - GID: '${USER_GID}' GNAME: '${USER_GROUP}'"
 else
-
-    log "    no additional SSH-users set"
-
+    addgroup -g "${USER_GID}" "${USER_GROUP}"
 fi
+
+if getent passwd "${USER_NAME}" &>/dev/null ; then
+    log "warning" "    user '${USER_NAME}' already exists in system"
+else
+    adduser -s "${USER_LOGIN_SHELL}" -D -u "${USER_UID}" -G "${USER_GROUP}" "${USER_NAME}"
+    log "    user '${USER_NAME}' created - UID: '${USER_UID}' GID: '${USER_GID}' GNAME: '${USER_GROUP}'"
+fi
+
+passwd -u "${USER_NAME}" &>/dev/null || true
+mkdir -p "/home/${USER_NAME}/.ssh"
+
+MOUNTED_AUTHORIZED_KEYS="${AUTHORIZED_KEYS_VOLUME}/${USER_NAME}"
+LOCAL_AUTHORIZED_KEYS="/home/${USER_NAME}/.ssh/authorized_keys"
+
+if [[ ! -e "${MOUNTED_AUTHORIZED_KEYS}" ]]; then
+    log "warning" "    no SSH authorized_keys found for user '${USER_NAME}'"
+else
+    cp "${MOUNTED_AUTHORIZED_KEYS}" "${LOCAL_AUTHORIZED_KEYS}"
+    log "    copied ${MOUNTED_AUTHORIZED_KEYS} to ${LOCAL_AUTHORIZED_KEYS}"
+    ensure_mod "${LOCAL_AUTHORIZED_KEYS}" "0600" "${USER_NAME}" "${USER_GID}"
+    log "    set mod 0600 on ${LOCAL_AUTHORIZED_KEYS}"
+    
+    # Disable password authentication since we have authorized_keys
+    sed -i "s/#PasswordAuthentication.*/PasswordAuthentication no/" /etc/ssh/sshd_config
+    log "    disabled password authentication for key-based login"
+fi
+
+printf "\n"
 
 echo ""
 
