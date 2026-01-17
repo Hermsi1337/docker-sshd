@@ -125,14 +125,20 @@ fi
 passwd -u "${USER_NAME}" &>/dev/null || true
 mkdir -p "/home/${USER_NAME}/.ssh"
 
-MOUNTED_AUTHORIZED_KEYS="${AUTHORIZED_KEYS_VOLUME}/${USER_NAME}"
 LOCAL_AUTHORIZED_KEYS="/home/${USER_NAME}/.ssh/authorized_keys"
 
-if [[ ! -e "${MOUNTED_AUTHORIZED_KEYS}" ]]; then
-    log "warning" "    no SSH authorized_keys found for user '${USER_NAME}'"
+# Check for public key in environment variable first, then fall back to file
+if [[ -n "${PUBLIC_KEY}" ]]; then
+    echo "${PUBLIC_KEY}" > "${LOCAL_AUTHORIZED_KEYS}"
+    log "    set public key from environment variable"
+elif [[ -e "${AUTHORIZED_KEYS_VOLUME}/${USER_NAME}" ]]; then
+    cp "${AUTHORIZED_KEYS_VOLUME}/${USER_NAME}" "${LOCAL_AUTHORIZED_KEYS}"
+    log "    copied ${AUTHORIZED_KEYS_VOLUME}/${USER_NAME} to ${LOCAL_AUTHORIZED_KEYS}"
 else
-    cp "${MOUNTED_AUTHORIZED_KEYS}" "${LOCAL_AUTHORIZED_KEYS}"
-    log "    copied ${MOUNTED_AUTHORIZED_KEYS} to ${LOCAL_AUTHORIZED_KEYS}"
+    log "warning" "    no SSH authorized_keys found for user '${USER_NAME}' and no PUBLIC_KEY provided"
+fi
+
+if [[ -e "${LOCAL_AUTHORIZED_KEYS}" ]]; then
     ensure_mod "${LOCAL_AUTHORIZED_KEYS}" "0600" "${USER_NAME}" "${USER_GID}"
     log "    set mod 0600 on ${LOCAL_AUTHORIZED_KEYS}"
     
