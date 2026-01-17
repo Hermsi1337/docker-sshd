@@ -1,6 +1,6 @@
 services:
   sshd:
-    image: caco3x/docker-sshd
+    image: caco3x/backimtime-sshd
     environment:
       # User ID and group of the user backintime on the target system.
       # To get them, SSH into your target system and run
