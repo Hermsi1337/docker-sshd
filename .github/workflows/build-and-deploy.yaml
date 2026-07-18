@@ -3,132 +3,132 @@ name: Build and Deploy Docker
 on:
   push:
     branches:
-      - '**'
+      - master
+  pull_request:
   workflow_dispatch:
   schedule:
-    - cron: '0 2 * * 1'  # every monday at 02:00 UTC
+    # Weekly security rebuild, every Monday at 02:00 UTC.
+    # This always rebuilds with --no-cache and pushes, so upstream Alpine and
+    # OpenSSH fixes are picked up even when the detected versions are unchanged.
+    - cron: '0 2 * * 1'
 
-env:
-  IMAGE_NAME: hermsi/alpine-sshd
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # Cancel superseded pull-request builds, but never interrupt a
+  # master / schedule / dispatch run that may be pushing images.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  build:
-    if: github.ref != 'refs/heads/master' && github.event_name != 'schedule'
+  lint:
+    name: Shell syntax check
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        IMAGE_NAME: [ "hermsi/alpine-sshd" ]
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - name: Set up Docker
-        uses: docker/setup-buildx-action@v3
-
-      - name: Install dependencies
+      - name: Bash syntax check
         run: |
-          sudo apt update
-          sudo apt install -y curl jq grep w3m
+          find . -name '*.sh' -print0 | xargs -0 -r -n1 bash -n
 
-      - name: Get current versions
-        id: server_versions
-        run: |
-          export CURRENT_ALPINE_VERSION="$(w3m -dump https://alpinelinux.org/releases/ | grep "edge" -A2 | tail -1 | awk '{print $1}' | cut -d "v" -f 2)"
-          export OPENSSH_VERSION="$(w3m -dump "https://pkgs.alpinelinux.org/packages?name=openssh&branch=v${CURRENT_ALPINE_VERSION}" | grep -m 1 "x86" | awk '{print $2}')"
-          echo "Building Open-SSH in version '${OPENSSH_VERSION}' on Alpine '${CURRENT_ALPINE_VERSION}'"
-          echo "ALPINE_VERSION=$CURRENT_ALPINE_VERSION" >> $GITHUB_ENV
-          echo "OPENSSH_VERSION=$OPENSSH_VERSION" >> $GITHUB_ENV
-
-      - name: Bash Syntax Check
-        run: |
-          find . -name "*.sh" -print0 | xargs -0 -r -n1 bash -n
-
-      - name: Build Docker Image
-        run: |
-          docker build \
-            --no-cache \
-            --pull \
-            --build-arg OPENSSH_VERSION="${{ env.OPENSSH_VERSION }}" \
-            --build-arg ALPINE_VERSION="${{ env.ALPINE_VERSION }}" \
-            --tag "${{ matrix.IMAGE_NAME }}:${{ env.OPENSSH_VERSION }}-alpine${{ env.ALPINE_VERSION }}" \
-            --tag "${{ matrix.IMAGE_NAME }}:${{ env.OPENSSH_VERSION }}-alpine" \
-            --tag "${{ matrix.IMAGE_NAME }}:${{ env.OPENSSH_VERSION }}" \
-            --tag "${{ matrix.IMAGE_NAME }}:latest" \
-            --file "${{ github.workspace }}/Dockerfile" \
-            "${{ github.workspace }}"
-
-  deploy:
-    if: github.ref == 'refs/heads/master' || github.event_name == 'schedule'
+  build:
+    name: Build and publish image
+    needs: lint
     runs-on: ubuntu-latest
-
     permissions:
       contents: read
       packages: write
-
-    strategy:
-      matrix:
-        IMAGE_NAME:
-          - "hermsi/alpine-sshd"
-          - "quay.io/hermsi1337/alpine-sshd"
-          - "ghcr.io/${{ github.repository_owner }}/docker-sshd"
-
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - name: Set up Docker
-        uses: docker/setup-buildx-action@v3
-
-      - name: Install dependencies
+      - name: Detect Alpine and OpenSSH versions
+        id: versions
         run: |
-          sudo apt update
-          sudo apt install -y curl jq grep w3m
+          set -euo pipefail
 
-      - name: Get current versions
-        id: server_versions
-        run: |
-          export CURRENT_ALPINE_VERSION="$(w3m -dump https://alpinelinux.org/releases/ | grep "edge" -A2 | tail -1 | awk '{print $1}' | cut -d "v" -f 2)"
-          export OPENSSH_VERSION="$(w3m -dump "https://pkgs.alpinelinux.org/packages?name=openssh&branch=v${CURRENT_ALPINE_VERSION}" | grep -m 1 "x86" | awk '{print $2}')"
-          echo "Building Open-SSH in version '${OPENSSH_VERSION}' on Alpine '${CURRENT_ALPINE_VERSION}'"
-          echo "ALPINE_VERSION=$CURRENT_ALPINE_VERSION" >> $GITHUB_ENV
-          echo "OPENSSH_VERSION=$OPENSSH_VERSION" >> $GITHUB_ENV
+          # Alpine version from the official image (e.g. 3.24.1 -> tag suffix 3.24).
+          alpine_full="$(docker run --rm alpine:latest sh -c '. /etc/os-release && printf %s "$VERSION_ID"')"
+          alpine="$(printf '%s' "$alpine_full" | cut -d. -f1,2)"
 
-      - name: Bash Syntax Check
-        run: |
-          find . -name "*.sh" -print0 | xargs -0 -r -n1 bash -n
+          # Exact openssh package version available in that Alpine branch.
+          policy="$(docker run --rm alpine:latest sh -c 'apk update -q >/dev/null 2>&1 && apk policy openssh')"
+          openssh=""
+          if [[ "$policy" =~ ([0-9]+\.[0-9]+_p[0-9]+-r[0-9]+) ]]; then
+            openssh="${BASH_REMATCH[1]}"
+          fi
 
-      - name: Write Docker config.json
-        run: |
-          mkdir -p $HOME/.docker
-          echo '${{ secrets.DOCKER_CONFIG_JSON }}' > $HOME/.docker/config.json
-          chmod 0600 $HOME/.docker/config.json
+          if [ -z "$alpine" ] || [ -z "$openssh" ]; then
+            echo "::error::version detection failed (alpine='$alpine', openssh='$openssh')"
+            echo "apk policy output was:"
+            printf '%s\n' "$policy"
+            exit 1
+          fi
 
-      - name: Login to GHCR
-        uses: docker/login-action@v3
+          {
+            echo "alpine=$alpine"
+            echo "openssh=$openssh"
+          } >> "$GITHUB_OUTPUT"
+          echo "Building OpenSSH '$openssh' on Alpine '$alpine' (base image alpine:$alpine_full)"
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to Docker Hub
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Log in to Quay.io
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v4
+        with:
+          registry: quay.io
+          username: ${{ secrets.QUAY_USERNAME }}
+          password: ${{ secrets.QUAY_TOKEN }}
+
+      - name: Log in to GitHub Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Normalize image name
-        run: |
-          echo "IMAGE_NAME_LC=$(echo '${{ matrix.IMAGE_NAME }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+      - name: Generate image metadata
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          # metadata-action lowercases image names, so the mixed-case
+          # repository owner is handled automatically for GHCR.
+          images: |
+            hermsi/alpine-sshd
+            quay.io/hermsi1337/alpine-sshd
+            ghcr.io/${{ github.repository_owner }}/docker-sshd
+          flavor: |
+            latest=false
+          tags: |
+            type=raw,value=latest
+            type=raw,value=${{ steps.versions.outputs.openssh }}
+            type=raw,value=${{ steps.versions.outputs.openssh }}-alpine
+            type=raw,value=${{ steps.versions.outputs.openssh }}-alpine${{ steps.versions.outputs.alpine }}
 
-      - name: Build Docker Image
-        run: |
-          docker build \
-            --no-cache \
-            --pull \
-            --build-arg OPENSSH_VERSION="${{ env.OPENSSH_VERSION }}" \
-            --build-arg ALPINE_VERSION="${{ env.ALPINE_VERSION }}" \
-            --tag "${{ env.IMAGE_NAME_LC }}:${{ env.OPENSSH_VERSION }}-alpine${{ env.ALPINE_VERSION }}" \
-            --tag "${{ env.IMAGE_NAME_LC }}:${{ env.OPENSSH_VERSION }}-alpine" \
-            --tag "${{ env.IMAGE_NAME_LC }}:${{ env.OPENSSH_VERSION }}" \
-            --tag "${{ env.IMAGE_NAME_LC }}:latest" \
-            --file "${{ github.workspace }}/Dockerfile" \
-            "${{ github.workspace }}"
-
-      - name: Push Docker Images
-        run: |
-          docker push "${{ env.IMAGE_NAME_LC }}:${{ env.OPENSSH_VERSION }}-alpine${{ env.ALPINE_VERSION }}"
-          docker push "${{ env.IMAGE_NAME_LC }}:${{ env.OPENSSH_VERSION }}-alpine"
-          docker push "${{ env.IMAGE_NAME_LC }}:${{ env.OPENSSH_VERSION }}"
-          docker push "${{ env.IMAGE_NAME_LC }}:latest"
+      - name: Build and push
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name != 'pull_request' }}
+          no-cache: true
+          pull: true
+          provenance: false
+          build-args: |
+            ALPINE_VERSION=${{ steps.versions.outputs.alpine }}
+            OPENSSH_VERSION=${{ steps.versions.outputs.openssh }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
