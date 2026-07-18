@@ -1,3 +1,4 @@
+[![Build and Deploy](https://github.com/Hermsi1337/docker-sshd/actions/workflows/build-and-deploy.yaml/badge.svg)](https://github.com/Hermsi1337/docker-sshd/actions/workflows/build-and-deploy.yaml)
 [![Docker Pulls](https://img.shields.io/docker/pulls/hermsi/alpine-sshd?style=flat-square&logo=docker)](https://hub.docker.com/r/hermsi/alpine-sshd/)
 [![Docker Stars](https://img.shields.io/docker/stars/hermsi/alpine-sshd?style=flat-square&logo=docker)](https://hub.docker.com/r/hermsi/alpine-sshd/)
 [![Image Size](https://img.shields.io/docker/image-size/hermsi/alpine-sshd/latest?style=flat-square&logo=docker)](https://hub.docker.com/r/hermsi/alpine-sshd/)
@@ -19,6 +20,7 @@ For recent tags check [Dockerhub](https://hub.docker.com/r/hermsi/alpine-sshd/ta
 
 ### Features
 
+* Multi-arch image, built for `linux/amd64` and `linux/arm64`
 * `bash`-shell and `rsync` installed
 * Default `.bashrc` from `ubuntu`
 * Desired shell is configurable by --env
