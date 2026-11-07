@@ -69,9 +69,9 @@ The tag set encodes the exact OpenSSH package version and the Alpine release the
 | Tag pattern | Example | Description |
 | --- | --- | --- |
 | `latest` | `latest` | Most recent build |
-| `<ssh-version>` | `10.3_p1-r0` | Exact Alpine `openssh` package version |
-| `<ssh-version>-alpine` | `10.3_p1-r0-alpine` | Same, with explicit distro marker |
-| `<ssh-version>-alpine<alpine-version>` | `10.3_p1-r0-alpine3.24` | Fully pinned: OpenSSH version and Alpine release |
+| `<ssh-version>` | `10.3_p1-r2` | Exact Alpine `openssh` package version |
+| `<ssh-version>-alpine` | `10.3_p1-r2-alpine` | Same, with explicit distro marker |
+| `<ssh-version>-alpine<alpine-version>` | `10.3_p1-r2-alpine3.24` | Fully pinned: OpenSSH version and Alpine release |
 
 Versions are detected automatically at build time from the current `alpine:latest` image, so new OpenSSH releases are published as soon as Alpine ships them. Independent of version changes, all tags are rebuilt and re-pushed **every Monday at 02:00 UTC** with a fresh package index, so even a pinned tag receives Alpine security fixes. For the full list of available tags see [Docker Hub](https://hub.docker.com/r/hermsi/alpine-sshd/tags/).
 

@@ -31,6 +31,21 @@ jobs:
         run: |
           find . -name '*.sh' -print0 | xargs -0 -r -n1 bash -n
 
+  keepalive:
+    name: Keep schedule alive
+    # GitHub disables scheduled workflows after 60 days without repository
+    # activity. Re-enabling an active workflow via the API resets that timer
+    # without needing a dummy commit.
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - name: Reset inactivity timer
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X PUT "repos/${GITHUB_REPOSITORY}/actions/workflows/build-and-deploy.yaml/enable"
+
   build:
     name: Build and publish image
     needs: lint
