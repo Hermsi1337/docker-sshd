@@ -34,17 +34,21 @@ jobs:
   keepalive:
     name: Keep schedule alive
     # GitHub disables scheduled workflows after 60 days without repository
-    # activity. Re-enabling an active workflow via the API resets that timer
-    # without needing a dummy commit.
-    if: github.event_name == 'schedule'
+    # activity. Re-enabling the active workflow via the API is the same call
+    # established keepalive actions use to reset that timer without dummy
+    # commits. GitHub does not document this behaviour.
+    if: contains(fromJSON('["schedule", "workflow_dispatch"]'), github.event_name)
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     permissions:
       actions: write
     steps:
       - name: Reset inactivity timer
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X PUT "repos/${GITHUB_REPOSITORY}/actions/workflows/build-and-deploy.yaml/enable"
+        run: |
+          workflow_path="${GITHUB_WORKFLOW_REF%@*}"
+          gh api -X PUT "repos/${GITHUB_REPOSITORY}/actions/workflows/${workflow_path##*/}/enable"
 
   build:
     name: Build and publish image

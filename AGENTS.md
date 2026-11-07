@@ -43,7 +43,7 @@ Every build publishes exactly these tags (identical set on all three registries)
   - `pull_request` — build-only validation: both platforms are built, but there are no registry logins and `push: false`, so PRs (including forks) need no secrets.
 - **Version detection at build time** (step id `versions`): the Alpine version comes from `docker run --rm alpine:latest` reading `/etc/os-release`; the exact `openssh` package version comes from `apk policy openssh` inside that same image. No HTML scraping. This runtime detection is the **source of truth** for what gets built and tagged.
 - **Lint job:** `bash -n` on every `*.sh` file; the build job depends on it.
-- **Keepalive job:** runs only on `schedule`, independent of the other jobs (no `needs`), with `permissions: actions: write`. It calls `gh api -X PUT repos/${GITHUB_REPOSITORY}/actions/workflows/build-and-deploy.yaml/enable` with the built-in token, which resets GitHub's 60-day inactivity timer every week so the schedule is not disabled for inactivity.
+- **Keepalive job:** runs on `schedule` and `workflow_dispatch` (so a manual run exercises it), independent of the other jobs (no `needs`), with `permissions: actions: write` and `timeout-minutes: 5`. It derives its own workflow file name from `GITHUB_WORKFLOW_REF` and calls `gh api -X PUT repos/${GITHUB_REPOSITORY}/actions/workflows/<own file>/enable` with the built-in token. GitHub does not document that this call resets the 60-day inactivity timer; the job relies on the same behaviour that established keepalive actions (e.g. `liskin/gh-workflow-keepalive`) use, and a `204` response does not prove the reset. After a scheduled run, `gh workflow list --all` must still show the workflow as `active`.
 - **Multi-arch:** `linux/amd64,linux/arm64` via `setup-qemu-action` + `setup-buildx-action` + `build-push-action`; tags/labels come from `metadata-action` (which also lowercases the GHCR owner).
 - **Concurrency:** one group per ref. Superseded PR runs are cancelled; `master`/schedule/dispatch runs are never cancelled mid-push.
 - **Secrets** (Actions secrets, required for pushing): `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`, `QUAY_USERNAME`, `QUAY_TOKEN`. GHCR authenticates with the built-in `GITHUB_TOKEN` (`permissions: packages: write`), no extra secret.
@@ -71,7 +71,7 @@ Cross-check on <https://pkgs.alpinelinux.org/packages?name=openssh> — `x86_64`
 
 ### Re-enable the workflow if GitHub disabled it
 
-GitHub disables scheduled workflows after ~60 days without repository activity (`disabled_inactivity`). **This has happened twice** in this repo (the second time the last scheduled run was 2026-09-21; found disabled on 2026-11-07). The keepalive job now prevents it. The manual fix below remains the fallback when the schedule was already disabled before the keepalive could run — a disabled workflow cannot re-enable itself. Check and fix:
+GitHub disables scheduled workflows after ~60 days without repository activity (`disabled_inactivity`). The timer counts from the last repository activity (e.g. a commit), not from the last scheduled run. **This has happened twice** in this repo. The keepalive job is meant to prevent it, but it relies on undocumented GitHub behaviour (see the keepalive job above), so check the workflow state periodically. The manual fix below remains the fallback when the schedule was already disabled before the keepalive could run — a disabled workflow cannot re-enable itself. Check and fix:
 
 ```bash
 gh workflow list --all      # look for "disabled_inactivity"
