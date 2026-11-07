@@ -17,9 +17,9 @@ A slim, highly configurable OpenSSH server image on Alpine Linux (`bash` and `rs
 Every build publishes exactly these tags (identical set on all three registries):
 
 - `latest`
-- `<ssh-version>` — e.g. `10.3_p1-r0`
-- `<ssh-version>-alpine` — e.g. `10.3_p1-r0-alpine`
-- `<ssh-version>-alpine<alpine-version>` — e.g. `10.3_p1-r0-alpine3.24`
+- `<ssh-version>` — e.g. `10.3_p1-r2`
+- `<ssh-version>-alpine` — e.g. `10.3_p1-r2-alpine`
+- `<ssh-version>-alpine<alpine-version>` — e.g. `10.3_p1-r2-alpine3.24`
 
 `<ssh-version>` is the full Alpine package version of `openssh` (including the `_pN-rN` suffix); `<alpine-version>` is the two-part Alpine branch (`3.24`, not `3.24.1`). Downstream users pin these tags — never rename, drop, or reformat them.
 
@@ -30,7 +30,7 @@ Every build publishes exactly these tags (identical set on all three registries)
 | `Dockerfile` | Alpine base + `openssh=<exact version>`. The two **fallback ARGs** at the top (`ALPINE_VERSION`, `OPENSSH_VERSION`) only apply when building without `--build-arg`; CI always overrides them. |
 | `entrypoint.sh` | Runtime configuration: root login modes (locked / password / keypair), `SSH_USERS` creation, host key generation, then `exec sshd -D -e`. |
 | `conf.d/etc/profile.d/ubuntu-bashrc.sh` | Ubuntu-style default `.bashrc` baked into the image. |
-| `.github/workflows/build-and-deploy.yaml` | The only workflow: lint job + multi-arch build/push job. |
+| `.github/workflows/build-and-deploy.yaml` | The only workflow: lint job + multi-arch build/push job + schedule keepalive job. |
 | `.github/dependabot.yml` | Weekly version bumps for GitHub Actions. |
 | `.gitattributes` | Enforces LF line endings (`* text=auto eol=lf`). Keep it that way. |
 
@@ -43,6 +43,7 @@ Every build publishes exactly these tags (identical set on all three registries)
   - `pull_request` — build-only validation: both platforms are built, but there are no registry logins and `push: false`, so PRs (including forks) need no secrets.
 - **Version detection at build time** (step id `versions`): the Alpine version comes from `docker run --rm alpine:latest` reading `/etc/os-release`; the exact `openssh` package version comes from `apk policy openssh` inside that same image. No HTML scraping. This runtime detection is the **source of truth** for what gets built and tagged.
 - **Lint job:** `bash -n` on every `*.sh` file; the build job depends on it.
+- **Keepalive job:** runs on `schedule` and `workflow_dispatch` (so a manual run exercises it), independent of the other jobs (no `needs`), with `permissions: actions: write` and `timeout-minutes: 5`. It derives its own workflow file name from `GITHUB_WORKFLOW_REF` and calls `gh api -X PUT repos/${GITHUB_REPOSITORY}/actions/workflows/<own file>/enable` with the built-in token. GitHub does not document that this call resets the 60-day inactivity timer; the job relies on the same behaviour that established keepalive actions (e.g. `liskin/gh-workflow-keepalive`) use, and a `204` response does not prove the reset. After a scheduled run, `gh workflow list --all` must still show the workflow as `active`.
 - **Multi-arch:** `linux/amd64,linux/arm64` via `setup-qemu-action` + `setup-buildx-action` + `build-push-action`; tags/labels come from `metadata-action` (which also lowercases the GHCR owner).
 - **Concurrency:** one group per ref. Superseded PR runs are cancelled; `master`/schedule/dispatch runs are never cancelled mid-push.
 - **Secrets** (Actions secrets, required for pushing): `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`, `QUAY_USERNAME`, `QUAY_TOKEN`. GHCR authenticates with the built-in `GITHUB_TOKEN` (`permissions: packages: write`), no extra secret.
@@ -53,6 +54,7 @@ Every build publishes exactly these tags (identical set on all three registries)
 2. **The schedule always builds and pushes.** Do not add "skip if version unchanged" logic — weekly no-cache rebuilds shipping security fixes under unchanged tags are the whole point.
 3. **Runtime detection wins.** The Dockerfile fallback ARGs exist only for manual `docker build` convenience. Bump them periodically so they stay honest, but never make CI depend on them.
 4. All three registries receive the identical tag set from a single build.
+5. **Do not remove the keepalive job.** Without it, GitHub disables the schedule after 60 days without repository activity and the security rebuilds silently stop.
 
 ## Common tasks
 
@@ -62,14 +64,14 @@ Verify the real values, then update only the two `ARG` lines at the top of `Dock
 
 ```bash
 docker run --rm alpine:latest sh -c '. /etc/os-release && echo $VERSION_ID'            # ALPINE_VERSION (use two-part form)
-docker run --rm alpine:latest sh -c 'apk update -q >/dev/null && apk policy openssh'   # OPENSSH_VERSION (exact, e.g. 10.3_p1-r0)
+docker run --rm alpine:latest sh -c 'apk update -q >/dev/null && apk policy openssh'   # OPENSSH_VERSION (exact, e.g. 10.3_p1-r2)
 ```
 
 Cross-check on <https://pkgs.alpinelinux.org/packages?name=openssh> — `x86_64` and `aarch64` must carry the same version, otherwise the pinned multi-arch build fails.
 
 ### Re-enable the workflow if GitHub disabled it
 
-GitHub disables scheduled workflows after ~60 days without repository activity (`disabled_inactivity`). **This has already happened once** in this repo. Check and fix:
+GitHub disables scheduled workflows after ~60 days without repository activity (`disabled_inactivity`). The timer counts from the last repository activity (e.g. a commit), not from the last scheduled run. **This has happened twice** in this repo. The keepalive job is meant to prevent it, but it relies on undocumented GitHub behaviour (see the keepalive job above), so check the workflow state periodically. The manual fix below remains the fallback when the schedule was already disabled before the keepalive could run — a disabled workflow cannot re-enable itself. Check and fix:
 
 ```bash
 gh workflow list --all      # look for "disabled_inactivity"
